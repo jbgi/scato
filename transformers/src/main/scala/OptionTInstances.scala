@@ -1,10 +1,9 @@
 package scato
 package transformers
 
-import clazz._
-import Functor.syntax._
-import Applicative.syntax._
-import Bind.syntax._
+import scato.clazz.Bind.syntax._
+import scato.clazz.Functor.syntax._
+import scato.clazz._
 
 trait OptionTInstances { instances =>
   implicit def functor[F[_]](implicit F: TC[F, Functor]): Functor[OptionT[F, ?]] = new Functor[OptionT[F, ?]] {
@@ -13,21 +12,15 @@ trait OptionTInstances { instances =>
   }
 
   implicit def monad[F[_]](implicit F: TC[F, Monad]): Monad[OptionT[F, ?]] = new Monad[OptionT[F, ?]] {
-    override val applicative = new Applicative[OptionT[F, ?]] {
-      override val apply = new Apply[OptionT[F, ?]] {
-        override val functor = instances.functor[F]
-        override def ap[A, B](oa: OptionT[F, A])(of: OptionT[F, A => B]): OptionT[F, B] =
-          OptionT(of.run.flatMap(_.fold(Applicative[F].pure[Option[B]](None))(f => oa.run.map(_.map(f)))))
-      }
-      override def pure[A](a: A): OptionT[F, A] =
-        OptionT(Applicative[F].pure(None))
-    }
 
-    override val bind = new Bind[OptionT[F, ?]] {
-      override val apply = applicative.apply
-      override def flatMap[A, B](oa: OptionT[F, A])(f: A => OptionT[F, B]): OptionT[F, B] =
-        OptionT(oa.run.flatMap(_.fold(Applicative[F].pure[Option[B]](None))(a => f(a).run)))
-    }
+    override def pure[A](a: A): OptionT[F, A] =
+      OptionT(Applicative[F].pure(None))
+    override def flatMap[A, B](oa: OptionT[F, A])(f: A => OptionT[F, B]): OptionT[F, B] =
+      OptionT(oa.run.flatMap(_.fold(Applicative[F].pure[Option[B]](None))(a => f(a).run)))
+
+    override def ap[A, B](oa: OptionT[F, A])(of: OptionT[F, A => B]): OptionT[F, B] =
+      OptionT(of.run.flatMap(_.fold(Applicative[F].pure[Option[B]](None))(f => oa.run.map(_.map(f)))))
+
   }
 
   implicit def applicativeTC[F[_], A](implicit F: TC[F, Monad]): TC[OptionT[F, ?], Applicative] =
