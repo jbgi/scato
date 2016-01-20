@@ -15,10 +15,12 @@ abstract class Monad[M[_]] {
   final val applicative = new Applicative[M] {
     override def pure[A](a: A): M[A] = Monad.this.pure(a)
     override def ap[A, B](fa: M[A])(f: M[(A) => B]): M[B] = Monad.this.ap(fa)(f)
+    override def map[A, B](ma: M[A])(f: (A) => B): M[B] = Monad.this.map(ma)(f)
   }
   final val bind = new Bind[M] {
     override def map[A, B](ma: M[A])(f: (A) => B): M[B] = Monad.this.map(ma)(f)
     override def flatMap[A, B](ma: M[A])(f: (A) => M[B]): M[B] = Monad.this.flatMap(ma)(f)
+    override def ap[A, B](fa: M[A])(f: M[A => B]): M[B] = Monad.this.ap(fa)(f)
   }
 }
 
