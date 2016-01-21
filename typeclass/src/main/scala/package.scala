@@ -22,20 +22,32 @@ abstract class TC[T[_], C[_[_]]] {
 
 object TC {
 
-  case class TypeKey(val typeConstructor : Types#Type, val typeArgs : List[Types#Type])
+  private val cache1: TrieMap[ClassTag[_], TrieMap[ClassTag[_], Any]] = TrieMap()
 
-  private val cache: TrieMap[ClassTag[_], TrieMap[TypeKey, Any]] = TrieMap()
+  private val cache2: TrieMap[ClassTag[_], TrieMap[ClassTag[_], TrieMap[ClassTag[_], Any]]] = TrieMap()
 
   def apply[T[_], C[_[_]]](i: C[T]): TC[T, C] =
     new TC[T, C] {
       override val instance = i
     }
 
-  def capture[T[_], C[_[_]]](i: => C[T])(implicit TT : TypeTag[T[_]], CT: ClassTag[C[Identity]]): TC[T, C] = {
-    val _instance = cache.getOrElseUpdate(CT, TrieMap())
-                         .getOrElseUpdate(TypeKey(TT.tpe.typeConstructor, TT.tpe.typeArgs), i)
+  def capture[T[_], C[_[_]]](i: => C[T])(implicit TT: ClassTag[T[Any]],
+                                         CT: ClassTag[C[Identity]]): TC[T, C] = {
+    val _instance = cache1.getOrElseUpdate(CT, TrieMap())
+                         .getOrElseUpdate(TT, i)
                          .asInstanceOf[C[T]]
     new TC[T, C] {
+      override val instance = _instance
+    }}
+
+  def capture[F[_], T[_[_],_], C[_[_]]](i: => C[T[F,?]])(implicit FT: ClassTag[F[Any]],
+                                               TT: ClassTag[T[Identity,Any]],
+                                               CT: ClassTag[C[Identity]]): TC[T[F, ?], C] = {
+    val _instance = cache2.getOrElseUpdate(CT, TrieMap())
+      .getOrElseUpdate(TT, TrieMap())
+      .getOrElseUpdate(FT, i)
+      .asInstanceOf[C[T[F, ?]]]
+    new TC[T[F, ?], C] {
       override val instance = _instance
     }}
 }

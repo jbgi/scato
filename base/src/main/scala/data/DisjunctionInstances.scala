@@ -1,11 +1,11 @@
 package scato
 package data
-import scala.reflect.runtime.universe.TypeTag
+
 import scato.clazz._
 import scato.data.Disjunction.{L_, R_, \/}
 
 trait DisjunctionInstances {
-  implicit def monad[L:TypeTag]: TC[L \/ ?, Monad] = TC.capture[L \/ ?, Monad](new Monad[L \/ ?] {
+  implicit def monad[L]: TC[L \/ ?, Monad] = TC.capture[L \/ ?, Monad](new Monad[L \/ ?] {
     override val applicative = new Applicative[L \/ ?] {
       override val apply = new Apply[L \/ ?] {
         override val functor = new Functor[L \/ ?] {
@@ -26,8 +26,8 @@ trait DisjunctionInstances {
     }
   })
 
-  implicit def applicativeTC[L:TypeTag]: TC[L \/ ?, Applicative] = TC[L \/ ?, Applicative](monad[L].instance.applicative)
-  implicit def applyTC[L:TypeTag]: TC[L \/ ?, Apply] = TC[L \/ ?, Apply](monad[L].instance.applicative.apply)
-  implicit def functorTC[L:TypeTag]: TC[L \/ ?, Functor] = TC[L \/ ?, Functor](monad[L].instance.applicative.apply.functor)
-  implicit def bindTC[L:TypeTag]: TC[L \/ ?, Bind] = TC[L \/ ?, Bind](monad[L].instance.bind)
+  implicit def applicativeTC[L]: TC[L \/ ?, Applicative] = TC[L \/ ?, Applicative](monad[L].instance.applicative)
+  implicit def applyTC[L]: TC[L \/ ?, Apply] = TC[L \/ ?, Apply](monad[L].instance.applicative.apply)
+  implicit def functorTC[L]: TC[L \/ ?, Functor] = TC[L \/ ?, Functor](monad[L].instance.applicative.apply.functor)
+  implicit def bindTC[L]: TC[L \/ ?, Bind] = TC[L \/ ?, Bind](monad[L].instance.bind)
 }
