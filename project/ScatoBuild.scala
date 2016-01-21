@@ -35,7 +35,7 @@ object ScatoBuild extends Build {
 
   lazy val baze         = module("base").dependsOn(typeclass)
 
-  lazy val free         = module("free").dependsOn(baze)
+  lazy val free         = module("free").dependsOn(baze).dependsOn(typeclass)
   lazy val profunctors  = module("profunctors").dependsOn(baze)
   lazy val transformers = module("transformers").dependsOn(baze)
 

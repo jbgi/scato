@@ -1,6 +1,8 @@
 package scato
 
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
+import scala.reflect.api.Types
 import scala.collection.concurrent.TrieMap
 
 import Leibniz.===
@@ -15,24 +17,27 @@ abstract class ~~>>[A[_[_, _]], B[_[_, _]]] {
 
 abstract class TC[T[_], C[_[_]]] {
   def instance: C[T]
-  def instanceTag: TypeTag[_]
   def map[D[_[_]]](f: C ~~> D): TC[T, D] = TC(f(instance))
 }
 
 object TC {
-  private val cache: TrieMap[TypeTag[_], Any] = TrieMap()
+
+  case class TypeKey(val typeConstructor : Types#Type, val typeArgs : List[Types#Type])
+
+  private val cache: TrieMap[ClassTag[_], TrieMap[TypeKey, Any]] = TrieMap()
 
   def apply[T[_], C[_[_]]](i: C[T]): TC[T, C] =
     new TC[T, C] {
-      override def instance = i
-      override def instanceTag = null
+      override val instance = i
     }
 
-  def capture[T[_], C[_[_]], ID[_]](i: => C[T])(implicit CT: TypeTag[C[ID]]): TC[T, C] =
+  def capture[T[_], C[_[_]]](i: => C[T])(implicit TT : TypeTag[T[_]], CT: ClassTag[C[Identity]]): TC[T, C] = {
+    val _instance = cache.getOrElseUpdate(CT, TrieMap())
+                         .getOrElseUpdate(TypeKey(TT.tpe.typeConstructor, TT.tpe.typeArgs), i)
+                         .asInstanceOf[C[T]]
     new TC[T, C] {
-      override def instance = cache.getOrElseUpdate(instanceTag, i).asInstanceOf[C[T]]
-      override def instanceTag = CT
-    }
+      override val instance = _instance
+    }}
 }
 
 
@@ -44,7 +49,6 @@ trait TCU[C[_[_]], TA] {
   type T[_]
   type A
   def instance: C[T]
-  def instanceTag: TypeTag[_]
   def leibniz: TA === T[A]
 
   def apply(ta: TA): T[A] = leibniz(ta)
@@ -59,7 +63,6 @@ object TCU {
     override type T[X] = T0[X]
     override type A = A0
     override def instance = TC0.instance
-    override def instanceTag = TC0.instanceTag
     override def leibniz: T0[A0] === T[A] = Leibniz.refl
   }
 }

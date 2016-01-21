@@ -1,13 +1,15 @@
 package scato
 package free
 package monad
-
-import clazz.{Apply, Applicative, Bind, BindRec, Functor, Monad}
+import scala.reflect.runtime.universe._
+import scato.clazz.{Applicative, Apply, Bind, Functor, Monad}
 
 trait FreeInstances {
 
-  implicit def freeBind[F[_]](implicit F: TC[F, Functor]): TC[Free[F, ?], Bind] =
-    TC.capture[Free[F, ?], Bind, Free[Any, ?]](new Bind[Free[F, ?]] {
+  implicit def freeTag[F[_]](implicit FT : TypeTag[F[_]]) : TypeTag[Free[F, _]] = typeTag[Free[F, _]] // FIXME: bottom
+
+  implicit def freeBind[F[_]](implicit FT : TypeTag[F[_]], F: TC[F, Functor]): TC[Free[F, ?], Bind] =
+    TC.capture[Free[F, ?], Bind](new Bind[Free[F, ?]] {
       override val apply = new Apply[Free[F, ?]] {
         override val functor = new Functor[Free[F, ?]] {
           override def map[A, B](fa: Free[F, A])(f: A => B): Free[F, B] = fa.map(f)
@@ -27,8 +29,8 @@ trait FreeInstances {
   }
   */
 
-  implicit def freeMonad[F[_]](implicit F: TC[F, Functor]): TC[Free[F, ?], Monad] =
-    TC.capture[Free[F, ?], Monad, Free[Any, ?]](new Monad[Free[F, ?]] {
+  implicit def freeMonad[F[_]](implicit FT : TypeTag[F[_]], F: TC[F, Functor]): TC[Free[F, ?], Monad] =
+    TC.capture[Free[F, ?], Monad](new Monad[Free[F, ?]] {
       override val bind = freeBind[F].instance
       override val applicative = new Applicative[Free[F, ?]] {
         override val apply = freeBind[F].instance.apply
