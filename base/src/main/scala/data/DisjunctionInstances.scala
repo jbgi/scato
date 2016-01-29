@@ -5,13 +5,13 @@ import clazz._
 import Disjunction.{\/, L_, R_}
 
 trait DisjunctionInstances {
-  implicit def monad[L]: Monad[L \/ ?] = new MonadClass[L \/ ?] {
+  implicit def monad[L]: Monad[L \/ ?] = new MonadTemplate[L \/ ?] {
 
     override def map[A, B](ma: L \/ A)(f: A => B): L \/ B =
       ma.fold[L \/ B](l => L_(l))(r => R_(f(r)))
 
     override def ap[A, B](ma: L \/ A)(mf: L \/ (A => B)): L \/ B =
-      ma.fold[L \/ B](l => L_(l))(a => functor.map[(A => B), B](mf)(f => f(a)))
+      ma.fold[L \/ B](l => L_(l))(a => map[(A => B), B](mf)(f => f(a)))
 
     override def pure[A](a: A): L \/ A =
       R_[A](a)
