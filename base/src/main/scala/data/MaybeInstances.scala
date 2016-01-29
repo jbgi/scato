@@ -4,7 +4,7 @@ package data
 import clazz._
 import Maybe.{Just, Empty}
 
-trait MaybeInstances extends MonadTemplate[Maybe] {
+trait MaybeInstances extends Monad.Template[Maybe] {
   override def ap[A, B](ma: Maybe[A])(mf: Maybe[A => B]): Maybe[B] =
     ma.fold(a => map[A => B, B](mf)(f => f(a)), Empty())
 

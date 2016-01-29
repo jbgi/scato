@@ -12,5 +12,9 @@ trait Traversable[T[_]] {
 object Traversable extends TraversableInstances {
   def apply[T[_]](implicit T: Traversable[T]): Traversable[T] = T
 
+  trait Class[F[_]] extends Traversable[F] with Functor.Class[F] with Foldable.Class[F] {
+    implicit final def traversable: Traversable[F] = this
+  }
+  
   object syntax extends TraversableSyntax
 }

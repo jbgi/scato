@@ -8,5 +8,9 @@ trait Functor[F[_]] {
 object Functor {
   def apply[F[_]](implicit F: Functor[F]): Functor[F] = F
 
+  trait Class[F[_]] extends Functor[F]{
+    implicit final def functor: Functor[F] = this
+  }
+  
   object syntax extends FunctorSyntax
 }
