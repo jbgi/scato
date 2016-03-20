@@ -4,15 +4,17 @@ import Keys._
 import pl.project13.scala.sbt.JmhPlugin
 
 object ScatoBuild extends Build {
-  val testDeps = Seq("org.scalacheck" %% "scalacheck" % "1.12.5" % "test")
+  val testDeps = Seq("org.scalacheck" %% "scalacheck" % "1.13.0" % "test")
 
   def module(prjName: String) = Project(
     id = prjName,
     base = file(prjName)).settings(
     name := s"scato-$prjName",
-    scalaVersion := "2.11.7",
-    scalacOptions ++= Seq("-feature","-deprecation", "-Xlint", "-language:higherKinds"),
+    scalaVersion := "2.11.8",
+    scalacOptions ++= Seq("-feature","-deprecation", "-Xlint", "-language:higherKinds",
+                          "-Ybackend:GenBCode", "-Ydelambdafy:method", "-target:jvm-1.8"),
     libraryDependencies ++= testDeps ++ Seq(
+      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0",
       compilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1")
     )
   )
@@ -20,7 +22,8 @@ object ScatoBuild extends Build {
   lazy val root = Project(
     id = "root",
     base = file(".")
-  ).aggregate ( baze
+  ).aggregate ( playground
+              , baze
               , free
               , profunctors
               , transformers
@@ -28,6 +31,8 @@ object ScatoBuild extends Build {
               , prelude
               , benchmarks
               , examples )
+
+  lazy val playground   = module("playground")
 
   lazy val baze         = module("base")
 
@@ -50,8 +55,8 @@ object ScatoBuild extends Build {
       libraryDependencies ++=
         Seq ( "org.scala-lang" % "scala-reflect" % scalaVersion.value
             , "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
-            , "org.scalaz" %% "scalaz-core" % "7.2.0"
-            , "org.spire-math" %% "cats" % "0.3.0" )
+            , "org.scalaz" %% "scalaz-core" % "7.2.1"
+            , "org.typelevel" %% "cats" % "0.4.1" )
     )
 
   lazy val examples     = module("examples").dependsOn( baze
